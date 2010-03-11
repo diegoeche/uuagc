@@ -1,0 +1,9 @@
+#! /bin/sh
+cd ../uuagc-0.9.14/
+cabal build
+cabal install
+cd ..
+cd todaysplugin/
+cabal clean
+cabal configure
+cabal build

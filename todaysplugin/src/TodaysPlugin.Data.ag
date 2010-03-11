@@ -1,0 +1,5 @@
+DATA Tree
+   | Node  left:  Tree   right: Tree
+   | Tip   value: Int
+ 
+ 
