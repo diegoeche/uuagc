@@ -38,7 +38,7 @@ import System.IO( openFile, IOMode(..), hFileSize,
                   Handle(..), stderr, hPutStr)
 
 import Control.Exception (throwIO)
-import Control.Monad (liftM, when, (>=>))
+import Control.Monad (liftM, when, guard)
 
 -- | 'uuagc' returns the name of the uuagc compiler
 uuagcn = "uuagc"
@@ -83,19 +83,12 @@ withBuildTmpDir pkgDescr lbi f = do
             withExe pkgDescr $ \ theExe -> do
                     f $ buildDir lbi </> exeName theExe </> exeName theExe ++ "-tmp"
 
--- Deletes the tmp file if it exists
-deleteIfExistsFile :: FilePath -> FilePath -> IO ()
-deleteIfExistsFile buildTmp =
-                   removeIfExists
-                   . (buildTmp </>)
+-- Creates the output file given the main preprocessed file and the buildtmp folder
+tmpFile :: FilePath -> FilePath -> FilePath
+tmpFile buildTmp = (buildTmp </>)
                    . (`addExtension` "hs")
                    . dropExtension
                    . takeFileName
-           where removeIfExists f = do
-                 fe <- doesFileExist f -- doesFileExist f >>= (`when` removeFile f)
-                 print f
-                 print fe
-                 fe `when` removeFile f
 
 -- | 'updateAGFile' search into the uuagc options file for a list of all
 -- AG Files and theirs file dependencies in order to see if the latters
@@ -108,10 +101,16 @@ updateAGFile pkgDescr lbi (f, sp) = do
     ExitSuccess ->
       do fls <- processContent ppOutput
          let flsC = addSearch sp fls
-         fmt   <- getModificationTime f
          flsmt <- mapM getModificationTime flsC
-         when (any (fmt < ) flsmt)
-              (withBuildTmpDir pkgDescr lbi (flip deleteIfExistsFile f))
+         let maxModified = maximum $ flsmt
+             removeTmpFile f = do
+                 print f
+                 exists <- doesFileExist f
+                 print exists
+                 when exists $ do
+                     fmt <- getModificationTime f
+                     when (maxModified > fmt) $ removeFile f
+         withBuildTmpDir pkgDescr lbi $ removeTmpFile . (`tmpFile` f)
     (ExitFailure exc) ->
       do putErrorInfo ppOutput
          putErrorInfo ppError
@@ -136,15 +135,6 @@ uuagcBuildHook pd lbi uh bf = do
       agflSP = map (\f -> (f, dropFileName f)) agfls
   mapM_ (updateAGFile pd lbi) agflSP
   originalBuildHook pd lbi uh bf
-
--- uuagcPreBuild :: Args -> BuildFlags -> IO HookedBuildInfo
--- uuagcPreBuild args buildF = do
---   hbi <- originalPreBuild args buildF
---   uuagcOpts <- parserAG defUUAGCOptions
---   let agfls  = getAGFileList uuagcOpts
---       agflSP = map (\f -> (f, dropFileName f)) agfls
---   mapM_ updateAGFile agflSP
---   return hbi
 
 getAGFileList :: AGFileOptions -> [FilePath]
 getAGFileList = map (normalise . filename)

@@ -12,7 +12,7 @@ build-type:          Custom
 
 
 executable todaysplugin
-  build-depends:     base, uuagc==0.9.14 
+  build-depends:     base, uuagc==0.9.14, Cabal==1.6.0.3
   main-is:           TodaysPlugin.hs
   hs-source-dirs:    src,.
   x-uuagc-options:   "options: sdfljasldfja"
