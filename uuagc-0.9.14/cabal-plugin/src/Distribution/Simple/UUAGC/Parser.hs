@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -XScopedTypeVariables #-}
-module Distribution.Simple.UUAGC.Parser(parserAG, scanner, parseIOAction) where
+module Distribution.Simple.UUAGC.Parser(parserAG, scanner, parseIOAction, parseOptionAG) where
 
 import UU.Parsing
 import UU.Scanner
@@ -91,6 +91,9 @@ pAGFileOptions = pList pAGFileOption
 parserAG :: FilePath -> IO AGFileOptions
 parserAG fp = do s <- readFile fp
                  parseIOAction action pAGFileOptions (scanner fp s)
+
+parseOptionAG :: String -> IO AGFileOption
+parseOptionAG text = parseIOAction action pAGFileOption (scanner text text)
 
 scanner     :: String -> String -> [Token]
 scanner fn s = scan kwtxt kwotxt sctxt octxt (Pos 0 0 fn) s

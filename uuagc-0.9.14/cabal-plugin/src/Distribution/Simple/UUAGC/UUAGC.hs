@@ -46,6 +46,9 @@ uuagcn = "uuagc"
 -- | 'defUUAGCOptions' returns the default names of the uuagc options
 defUUAGCOptions = "uuagc_options"
 
+-- | The prefix used for the cabal file options
+agModule = "x-agmodule"
+
 uuagcUserHook :: UserHooks
 uuagcUserHook = simpleUserHooks {hookedPreProcessors = ("ag", uuagc):knownSuffixHandlers,
                                  buildHook = uuagcBuildHook}
@@ -104,9 +107,7 @@ updateAGFile pkgDescr lbi (f, sp) = do
          flsmt <- mapM getModificationTime flsC
          let maxModified = maximum $ flsmt
              removeTmpFile f = do
-                 print f
                  exists <- doesFileExist f
-                 print exists
                  when exists $ do
                      fmt <- getModificationTime f
                      when (maxModified > fmt) $ removeFile f
@@ -123,6 +124,14 @@ updateAGFile pkgDescr lbi (f, sp) = do
                                                   , std_err = CreatePipe
                                                   }
 
+getAGOptions :: [(String, String)] -> IO AGFileOptions
+getAGOptions extra = do
+  usesOptionsFile <- doesFileExist defUUAGCOptions
+  if usesOptionsFile
+       then parserAG defUUAGCOptions
+       else mapM (parseOptionAG . snd)
+            $ filter ((== agModule) . fst) extra
+
 uuagcBuildHook
   :: PackageDescription
      -> LocalBuildInfo
@@ -130,9 +139,10 @@ uuagcBuildHook
      -> BuildFlags
      -> IO ()
 uuagcBuildHook pd lbi uh bf = do
-  uuagcOpts <- parserAG defUUAGCOptions
+  uuagcOpts <- getAGOptions $ customFieldsPD pd
   let agfls  = getAGFileList uuagcOpts
       agflSP = map (\f -> (f, dropFileName f)) agfls
+--  print uuagcOpts
   mapM_ (updateAGFile pd lbi) agflSP
   originalBuildHook pd lbi uh bf
 
@@ -148,7 +158,7 @@ uuagc build local  =
      runPreProcessor = mkSimplePreProcessor $ \ inFile outFile verbosity ->
                        do info verbosity $ concat [inFile, " has been preprocessed into ", outFile]
                           print $ "processing: " ++ inFile
-                          opts <- parserAG defUUAGCOptions
+                          opts <- getAGOptions $ customFieldsBI build
                           let search  = dropFileName inFile
                               options = fromUUAGCOstoArgs (lookupFileOptions inFile opts)
                                         ++ ["-P" ++ search, "--output=" ++ outFile, inFile]
