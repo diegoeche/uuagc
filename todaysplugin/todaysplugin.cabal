@@ -9,9 +9,6 @@ license-file:        LICENSE
 author:              Diego Echeverri
 maintainer:          diegoeche@gmail.com
 build-type:          Custom
-x-agmodule:          file : "./src/TodaysPlugin.ag"
-                     options : data, catas, semfuns
-
 
 executable todaysplugin
   build-depends:     base, uuagc==0.9.14, Cabal==1.6.0.3

@@ -39,6 +39,9 @@ import System.IO( openFile, IOMode(..), hFileSize,
 
 import Control.Exception (throwIO)
 import Control.Monad (liftM, when, guard)
+import Control.Arrow ((&&&))
+import Data.Maybe (maybeToList)
+import Data.List (nub)
 
 -- | 'uuagc' returns the name of the uuagc compiler
 uuagcn = "uuagc"
@@ -139,10 +142,11 @@ uuagcBuildHook
      -> BuildFlags
      -> IO ()
 uuagcBuildHook pd lbi uh bf = do
-  uuagcOpts <- getAGOptions $ customFieldsPD pd
-  let agfls  = getAGFileList uuagcOpts
-      agflSP = map (\f -> (f, dropFileName f)) agfls
---  print uuagcOpts
+  let lib    = library $ pd
+      exes   = executables $ pd
+      bis    = map libBuildInfo (maybeToList lib) ++ map buildInfo exes
+  options <- getAGOptions (bis >>= customFieldsBI)
+  let agflSP = map (id &&& dropFileName) $ nub $ getAGFileList options
   mapM_ (updateAGFile pd lbi) agflSP
   originalBuildHook pd lbi uh bf
 

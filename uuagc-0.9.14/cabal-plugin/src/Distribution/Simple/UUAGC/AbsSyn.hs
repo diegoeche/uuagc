@@ -3,7 +3,8 @@ module Distribution.Simple.UUAGC.AbsSyn where
 import Distribution.Simple.UUAGC.Options
 import System.FilePath(normalise)
 
-data AGFileOption = AGFileOption {filename :: String, optios :: UUAGCOptions} deriving Show
+data AGFileOption = AGFileOption {filename :: String, optios :: UUAGCOptions} 
+     deriving (Show, Eq) 
 
 type AGFileOptions = [AGFileOption]
 
