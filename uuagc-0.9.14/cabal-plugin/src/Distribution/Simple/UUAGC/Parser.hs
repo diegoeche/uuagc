@@ -43,8 +43,8 @@ ugFlags = uFlags ++ (map (fst) gFlags)
 
 ugabsFlags = uabsFlags ++ gabsFlags
 
-kwtxt = uFlags ++ (map (fst) gFlags) ++ aFlags ++ ["file", "options"]
-kwotxt = [":","..","."]
+kwtxt = uFlags ++ (map fst gFlags) ++ aFlags ++ ["file", "options"]
+kwotxt = ["=",":","..","."]
 sctxt  = "..,"
 octxt = ":.,"
 
@@ -81,9 +81,12 @@ pAllFlags = pugFlags ++ [pModule,pOutput,pSearch,pPrefix,pWmax,pForceIrrefutable
 
 pAnyFlag = pAny id pAllFlags
 
+pSep :: Parser Token String
+pSep = pKey ":" <|> pKey "="
+
 pAGFileOption :: Parser Token AGFileOption
-pAGFileOption = AGFileOption <$> (pKey "file" *> pKey ":" *> pString)
-                <*> (pKey "options" *> pKey ":" *> pCommas pAnyFlag)
+pAGFileOption = AGFileOption <$> (pKey "file" *> pSep *> pString)
+                <*> (pKey "options" *> pSep *> pCommas pAnyFlag)
 
 pAGFileOptions :: Parser Token AGFileOptions
 pAGFileOptions = pList pAGFileOption

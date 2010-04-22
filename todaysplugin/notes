@@ -1,7 +1,0 @@
-1) Como saber donde está el .hs?
-2) Ya sabemos como leer del archivo cabal
-   a) usar x-uuagc
-   b) usar hook de lectura de cabal.
-3) No usar prebuild sinó usar buildHook
-
-

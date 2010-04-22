@@ -1,3 +1,5 @@
+{-# LANGUAGE CPP #-}
+
 module Distribution.Simple.UUAGC.UUAGC(uuagcUserHook,
                                        uuagc
                                       ) where
@@ -84,8 +86,14 @@ withBuildTmpDir
      -> (FilePath -> IO ())
      -> IO ()
 withBuildTmpDir pkgDescr lbi f = do
+-- #if MIN_VERSION_Cabal(1,8,0)
+#if MIN_VERSION_Cabal(1,8,0)
+            withLib pkgDescr $ \ _ -> do
+                    f $ buildDir lbi
+#else
             withLib pkgDescr () $ \ _ -> do
                     f $ buildDir lbi
+#endif
             withExe pkgDescr $ \ theExe -> do
                     f $ buildDir lbi </> exeName theExe </> exeName theExe ++ "-tmp"
 
