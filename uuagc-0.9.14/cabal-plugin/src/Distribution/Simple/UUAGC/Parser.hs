@@ -1,5 +1,9 @@
 {-# OPTIONS_GHC -XScopedTypeVariables #-}
-module Distribution.Simple.UUAGC.Parser(parserAG, scanner, parseIOAction, parseOptionAG) where
+module Distribution.Simple.UUAGC.Parser(parserAG,
+                                        scanner,
+                                        parseIOAction,
+                                        parseClassAG,
+                                        parseOptionAG) where
 
 import UU.Parsing
 import UU.Scanner
@@ -43,10 +47,10 @@ ugFlags = uFlags ++ (map (fst) gFlags)
 
 ugabsFlags = uabsFlags ++ gabsFlags
 
-kwtxt = uFlags ++ (map fst gFlags) ++ aFlags ++ ["file", "options"]
+kwtxt = uFlags ++ (map fst gFlags) ++ aFlags ++ ["file", "options", "class", "with"]
 kwotxt = ["=",":","..","."]
 sctxt  = "..,"
-octxt = ":.,"
+octxt = "=:.,"
 
 posTxt :: Pos
 posTxt = Pos 0 0 ""
@@ -84,9 +88,20 @@ pAnyFlag = pAny id pAllFlags
 pSep :: Parser Token String
 pSep = pKey ":" <|> pKey "="
 
-pAGFileOption :: Parser Token AGFileOption
-pAGFileOption = AGFileOption <$> (pKey "file" *> pSep *> pString)
+pFileClasses :: Parser Token [String]
+pFileClasses = pKey "with" *> (pCommas pString)
+             <|> pSucceed []
+
+pLiftOptions f n = f <$> (pKey n *> pSep *> pString)
                 <*> (pKey "options" *> pSep *> pCommas pAnyFlag)
+
+pAGFileOption :: Parser Token AGFileOption
+pAGFileOption = AGFileOption <$> (pKey "file" *> pSep *> pString) 
+                <*> pFileClasses
+                <*> (pKey "options" *> pSep *> pCommas pAnyFlag)
+
+pAGOptionsClass :: Parser Token AGOptionsClass
+pAGOptionsClass = pLiftOptions AGOptionsClass "class"
 
 pAGFileOptions :: Parser Token AGFileOptions
 pAGFileOptions = pList pAGFileOption
@@ -95,8 +110,13 @@ parserAG :: FilePath -> IO AGFileOptions
 parserAG fp = do s <- readFile fp
                  parseIOAction action pAGFileOptions (scanner fp s)
 
+liftParse p text = parseIOAction action p (scanner text text)
+
 parseOptionAG :: String -> IO AGFileOption
-parseOptionAG text = parseIOAction action pAGFileOption (scanner text text)
+parseOptionAG = liftParse pAGFileOption
+
+parseClassAG :: String -> IO AGOptionsClass
+parseClassAG = liftParse pAGOptionsClass
 
 scanner     :: String -> String -> [Token]
 scanner fn s = scan kwtxt kwotxt sctxt octxt (Pos 0 0 fn) s

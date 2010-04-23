@@ -3,8 +3,13 @@ module Distribution.Simple.UUAGC.AbsSyn where
 import Distribution.Simple.UUAGC.Options
 import System.FilePath(normalise)
 
-data AGFileOption = AGFileOption {filename :: String, optios :: UUAGCOptions} 
-     deriving (Show, Eq) 
+data AGFileOption = AGFileOption {filename :: String,
+                                  fileClasses :: [String],
+                                  opts :: UUAGCOptions}
+     deriving (Show, Eq)
+
+data AGOptionsClass = AGOptionsClass {className :: String, opts' :: UUAGCOptions}
+     deriving (Show, Read, Eq)
 
 type AGFileOptions = [AGFileOption]
 
@@ -59,7 +64,7 @@ data UUAGCOption = UModuleDefault
                  | UOptimize
                  | UDoubleColons
                  | UHaskellSyntax
-                   deriving (Eq,Read,Show)
+                   deriving (Eq, Read, Show)
 
 type UUAGCOptions = [UUAGCOption]
 
@@ -133,7 +138,7 @@ fromUUAGCOstoArgs = map fromUUAGCOtoArgs
 
 lookupFileOptions :: FilePath -> AGFileOptions -> UUAGCOptions
 lookupFileOptions s = foldl f defaultUUAGCOptions
-    where f e (AGFileOption s' opt)
+    where f e (AGFileOption s' classes opt)
               | s == (normalise s')  = opt
               | otherwise            = e
 
