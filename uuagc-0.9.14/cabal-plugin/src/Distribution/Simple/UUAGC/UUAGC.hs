@@ -43,7 +43,7 @@ import System.IO( openFile, IOMode(..),
                   hClose,
                   hGetContents,
                   hFlush,
-                  Handle(..), stderr, hPutStr)
+                  Handle(..), stderr, hPutStr, hPutStrLn)
 
 import Control.Exception (throwIO)
 import Control.Monad (liftM, when, guard, forM_, forM)
@@ -196,7 +196,7 @@ uuagcBuildHook pd lbi uh bf = do
   options <- getAGFileOptions (bis >>= customFieldsBI)
   fileOptions <- forM options (\ opt ->
       let (notFound, opts) = getOptionsFromClass classes $ opt
-      in forM_ notFound putStrLn >> return (normalise . filename $ opt, opts))
+      in forM_ notFound (hPutStrLn stderr) >> return (normalise . filename $ opt, opts))
   writeFileOptions fileOptions
   let agflSP = map (id &&& dropFileName) $ nub $ getAGFileList options
   mapM_ (updateAGFile pd lbi) agflSP
