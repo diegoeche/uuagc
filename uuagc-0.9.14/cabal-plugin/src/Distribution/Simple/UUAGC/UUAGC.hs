@@ -69,7 +69,8 @@ agClass  = "x-agclass"
 
 uuagcUserHook :: UserHooks
 uuagcUserHook = simpleUserHooks {hookedPreProcessors = ("ag", uuagc):knownSuffixHandlers,
-                                 buildHook = uuagcBuildHook}
+                                 buildHook = uuagcBuildHook,
+                                 postBuild = uuagcPostBuild}
 
 originalPreBuild  = preBuild simpleUserHooks
 originalBuildHook = buildHook simpleUserHooks
@@ -201,6 +202,10 @@ uuagcBuildHook pd lbi uh bf = do
   let agflSP = map (id &&& dropFileName) $ nub $ getAGFileList options
   mapM_ (updateAGFile pd lbi) agflSP
   originalBuildHook pd lbi uh bf
+
+uuagcPostBuild _ _ _ _ = do
+               exists <- doesFileExist agClassesFile
+               when exists $ removeFile agClassesFile
 
 getAGFileList :: AGFileOptions -> [FilePath]
 getAGFileList = map (normalise . filename)
